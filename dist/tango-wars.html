@@ -839,6 +839,53 @@ body.fever::after {
   margin-top: 4px;
 }
 
+/* ---------- 4b. デイリーゴースト日次比較行 (Phase2 SPEC_ADDICTION §2.4) ---------- */
+/* 週次ゴースト(4.)と同じトーンを踏襲しつつ一回り小さくした行。カード内の下部に置く。 */
+
+.home-daily-ghost {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+  font-size: 12.5px;
+}
+
+.home-daily-ghost-solo { color: var(--text-dim); }
+
+.home-daily-label { color: var(--text-dim); }
+
+.home-daily-value {
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-daily-value.home-daily-prev { color: var(--text-dim); }
+
+.home-daily-vs { margin: 0 6px; font-size: 11px; color: var(--text-dim); }
+
+/* 「昨日超え!」バッジ: 週次の home-season-beat と同系の金トーン */
+.home-daily-beat {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, .16);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 11px;
+  vertical-align: middle;
+  animation: home-gold-glow 1s ease-in-out infinite alternate;
+}
+
+/* 未達ニアミス煽り: 「あと◯点で昨日超え!」 */
+.home-daily-nearmiss {
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
 /* ---------- 5. ガチャカード ---------- */
 
 .home-gacha-card {
@@ -5556,7 +5603,11 @@ window.TW = window.TW || {};
       tickets: 1, // スカウトチケット(初回1枚プレゼント)
       login: { cycleDay: 0, lastDate: "" }, // ログボ 7日サイクル
       boost: { stock: 1, lastChargeAt: now, pending: false },
-      blitzBest: 0
+      blitzBest: 0,
+      // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4, 2026-07-06追加)。
+      // prev は「前回プレイ日」のスコア。ver2セーブへの追加フィールドとして
+      // mergeDefaults 経由で既存セーブにも補われる(ver番号自体は上げない)。
+      dayScore: { date: today, score: 0, prev: 0 }
     };
   }
 
@@ -5621,6 +5672,13 @@ window.TW = window.TW || {};
     // 新規単語/日カウントの日替わりリセット
     if (!state.newPerDay || state.newPerDay.date !== today) {
       state.newPerDay = { date: today, count: 0 };
+    }
+
+    // デイリーゴースト日替わり処理(SPEC_ADDICTION §2.4): 日付が変わったら
+    // score→prevへ繰り越してscoreを0にリセットする(prev=「前回プレイ日」のスコア)。
+    if (!state.dayScore || state.dayScore.date !== today) {
+      var prevDayScore = state.dayScore ? state.dayScore.score : 0;
+      state.dayScore = { date: today, score: 0, prev: prevDayScore };
     }
   }
 
@@ -6169,7 +6227,21 @@ window.TW = window.TW || {};
   };
 
   TW.quest.addSeasonScore = function (n) {
-    TW.store.state.season.score += n;
+    var state = TW.store.state;
+    state.season.score += n;
+    // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4): シーズンスコアと同時に
+    // dayScore.score にも加算する。dayScore は store.load の日替わり処理で必ず補われるが、
+    // load前呼び出しなど想定外の状況に備えて存在チェックだけ入れておく。
+    if (state.dayScore) state.dayScore.score += n;
+  };
+
+  // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4)
+  TW.quest.dailyInfo = function () {
+    var ds = (TW.store.state && TW.store.state.dayScore) || { score: 0, prev: 0 };
+    var todayScore = ds.score || 0;
+    var prevScore = ds.prev || 0;
+    var beat = prevScore > 0 && todayScore > prevScore;
+    return { todayScore: todayScore, prevScore: prevScore, beat: beat, diff: todayScore - prevScore };
   };
 
   // ctx = { win, promoted, maxCombo, capturedWords } (いずれも省略可)
@@ -8638,7 +8710,37 @@ window.TW = window.TW || {};
     );
   }
 
-  function renderSeasonCard(season) {
+  // デイリーゴースト「昨日の自分と競う」の日次比較行 (SPEC_ADDICTION §2.4)。
+  // prevScore=0(初日・前回スコア無し)は比較行ごと非表示にし、todayScoreだけあれば
+  // 「今日 ◯◯」のみ控えめに表示する(判断: 何も無ければ丸ごと非表示にした)。
+  function renderDailyGhostRow(daily) {
+    if (!daily) return "";
+    if (daily.prevScore <= 0) {
+      if (daily.todayScore <= 0) return "";
+      return (
+        '<div class="home-daily-ghost home-daily-ghost-solo">' +
+          '<span class="home-daily-label">今日</span> ' +
+          '<span class="home-daily-value tabular-nums">' + fmt(daily.todayScore) + '</span>' +
+        '</div>'
+      );
+    }
+    // 不足点数(未達のときのみ意味を持つ)。prevScoreの15%以内ならニアミス煽りを出す。
+    var deficit = daily.prevScore - daily.todayScore;
+    var nearMiss = !daily.beat && deficit > 0 && deficit <= daily.prevScore * 0.15;
+    return (
+      '<div class="home-daily-ghost">' +
+        '<span class="home-daily-label">今日</span> ' +
+        '<span class="home-daily-value tabular-nums">' + fmt(daily.todayScore) + '</span>' +
+        '<span class="home-daily-vs">vs</span>' +
+        '<span class="home-daily-label">昨日</span> ' +
+        '<span class="home-daily-value home-daily-prev tabular-nums">' + fmt(daily.prevScore) + '</span>' +
+        (daily.beat ? '<span class="home-daily-beat">昨日超え!</span>' : '') +
+        (nearMiss ? '<div class="home-daily-nearmiss">あと' + fmt(deficit) + '点で昨日超え!</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function renderSeasonCard(season, daily) {
     var beatGhost = season.score > season.bestPastScore;
     return (
       '<section class="card home-season-card">' +
@@ -8657,6 +8759,7 @@ window.TW = window.TW || {};
         '</div>' +
         (beatGhost ? '<div class="home-season-beat">ゴースト超え!</div>' : '') +
         '<div class="home-season-days">残り' + fmt(season.daysLeft) + '日</div>' +
+        renderDailyGhostRow(daily) +
       '</section>'
     );
   }
@@ -8953,6 +9056,7 @@ window.TW = window.TW || {};
     var dueCount = TW.srs.dueWords().length;
     var quests = TW.quest.getDaily();
     var season = TW.quest.seasonInfo();
+    var daily = TW.quest.dailyInfo();
     var events = (TW.daily && typeof TW.daily.currentEvents === "function") ? TW.daily.currentEvents() : [];
 
     container.innerHTML =
@@ -8964,7 +9068,7 @@ window.TW = window.TW || {};
         renderBoostGauge() +
         renderEventCard(events) +
         renderQuests(quests) +
-        renderSeasonCard(season) +
+        renderSeasonCard(season, daily) +
         renderGachaCard(s.coins, s.tickets || 0) +
         renderWritingLockCard() +
       '</div>';

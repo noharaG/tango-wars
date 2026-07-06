@@ -128,7 +128,21 @@ window.TW = window.TW || {};
   };
 
   TW.quest.addSeasonScore = function (n) {
-    TW.store.state.season.score += n;
+    var state = TW.store.state;
+    state.season.score += n;
+    // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4): シーズンスコアと同時に
+    // dayScore.score にも加算する。dayScore は store.load の日替わり処理で必ず補われるが、
+    // load前呼び出しなど想定外の状況に備えて存在チェックだけ入れておく。
+    if (state.dayScore) state.dayScore.score += n;
+  };
+
+  // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4)
+  TW.quest.dailyInfo = function () {
+    var ds = (TW.store.state && TW.store.state.dayScore) || { score: 0, prev: 0 };
+    var todayScore = ds.score || 0;
+    var prevScore = ds.prev || 0;
+    var beat = prevScore > 0 && todayScore > prevScore;
+    return { todayScore: todayScore, prevScore: prevScore, beat: beat, diff: todayScore - prevScore };
   };
 
   // ctx = { win, promoted, maxCombo, capturedWords } (いずれも省略可)

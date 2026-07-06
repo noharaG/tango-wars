@@ -230,7 +230,37 @@ window.TW = window.TW || {};
     );
   }
 
-  function renderSeasonCard(season) {
+  // デイリーゴースト「昨日の自分と競う」の日次比較行 (SPEC_ADDICTION §2.4)。
+  // prevScore=0(初日・前回スコア無し)は比較行ごと非表示にし、todayScoreだけあれば
+  // 「今日 ◯◯」のみ控えめに表示する(判断: 何も無ければ丸ごと非表示にした)。
+  function renderDailyGhostRow(daily) {
+    if (!daily) return "";
+    if (daily.prevScore <= 0) {
+      if (daily.todayScore <= 0) return "";
+      return (
+        '<div class="home-daily-ghost home-daily-ghost-solo">' +
+          '<span class="home-daily-label">今日</span> ' +
+          '<span class="home-daily-value tabular-nums">' + fmt(daily.todayScore) + '</span>' +
+        '</div>'
+      );
+    }
+    // 不足点数(未達のときのみ意味を持つ)。prevScoreの15%以内ならニアミス煽りを出す。
+    var deficit = daily.prevScore - daily.todayScore;
+    var nearMiss = !daily.beat && deficit > 0 && deficit <= daily.prevScore * 0.15;
+    return (
+      '<div class="home-daily-ghost">' +
+        '<span class="home-daily-label">今日</span> ' +
+        '<span class="home-daily-value tabular-nums">' + fmt(daily.todayScore) + '</span>' +
+        '<span class="home-daily-vs">vs</span>' +
+        '<span class="home-daily-label">昨日</span> ' +
+        '<span class="home-daily-value home-daily-prev tabular-nums">' + fmt(daily.prevScore) + '</span>' +
+        (daily.beat ? '<span class="home-daily-beat">昨日超え!</span>' : '') +
+        (nearMiss ? '<div class="home-daily-nearmiss">あと' + fmt(deficit) + '点で昨日超え!</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function renderSeasonCard(season, daily) {
     var beatGhost = season.score > season.bestPastScore;
     return (
       '<section class="card home-season-card">' +
@@ -249,6 +279,7 @@ window.TW = window.TW || {};
         '</div>' +
         (beatGhost ? '<div class="home-season-beat">ゴースト超え!</div>' : '') +
         '<div class="home-season-days">残り' + fmt(season.daysLeft) + '日</div>' +
+        renderDailyGhostRow(daily) +
       '</section>'
     );
   }
@@ -545,6 +576,7 @@ window.TW = window.TW || {};
     var dueCount = TW.srs.dueWords().length;
     var quests = TW.quest.getDaily();
     var season = TW.quest.seasonInfo();
+    var daily = TW.quest.dailyInfo();
     var events = (TW.daily && typeof TW.daily.currentEvents === "function") ? TW.daily.currentEvents() : [];
 
     container.innerHTML =
@@ -556,7 +588,7 @@ window.TW = window.TW || {};
         renderBoostGauge() +
         renderEventCard(events) +
         renderQuests(quests) +
-        renderSeasonCard(season) +
+        renderSeasonCard(season, daily) +
         renderGachaCard(s.coins, s.tickets || 0) +
         renderWritingLockCard() +
       '</div>';

@@ -52,7 +52,11 @@ window.TW = window.TW || {};
       tickets: 1, // スカウトチケット(初回1枚プレゼント)
       login: { cycleDay: 0, lastDate: "" }, // ログボ 7日サイクル
       boost: { stock: 1, lastChargeAt: now, pending: false },
-      blitzBest: 0
+      blitzBest: 0,
+      // デイリーゴースト「昨日の自分と競う」(SPEC_ADDICTION §2.4, 2026-07-06追加)。
+      // prev は「前回プレイ日」のスコア。ver2セーブへの追加フィールドとして
+      // mergeDefaults 経由で既存セーブにも補われる(ver番号自体は上げない)。
+      dayScore: { date: today, score: 0, prev: 0 }
     };
   }
 
@@ -117,6 +121,13 @@ window.TW = window.TW || {};
     // 新規単語/日カウントの日替わりリセット
     if (!state.newPerDay || state.newPerDay.date !== today) {
       state.newPerDay = { date: today, count: 0 };
+    }
+
+    // デイリーゴースト日替わり処理(SPEC_ADDICTION §2.4): 日付が変わったら
+    // score→prevへ繰り越してscoreを0にリセットする(prev=「前回プレイ日」のスコア)。
+    if (!state.dayScore || state.dayScore.date !== today) {
+      var prevDayScore = state.dayScore ? state.dayScore.score : 0;
+      state.dayScore = { date: today, score: 0, prev: prevDayScore };
     }
   }
 

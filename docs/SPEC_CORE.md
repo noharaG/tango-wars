@@ -143,7 +143,8 @@ js/main.js         → TW.router, 起動処理
 - `TW.quest.onAction(type: string, n = 1): void`
 - `TW.quest.claim(id): number|0` — 未達成/受取済は0
 - `TW.quest.seasonInfo(): { weekKey, score, bestPastScore, daysLeft }` — 週替わり時に history へ繰入れ(store.load か ここで遅延処理)
-- `TW.quest.addSeasonScore(n): void`
+- `TW.quest.addSeasonScore(n): void` — シーズンスコアと dayScore.score(SPEC_ADDICTION §2.4)の両方に加算
+- `TW.quest.dailyInfo(): { todayScore, prevScore, beat, diff }` — 昨日(前回プレイ日)の自分との比較(SPEC_ADDICTION §2.4)
 - `TW.quest.checkAchievements(ctx): string[]` — 新規解除の実績idを返す
 
 ### TW.sfx

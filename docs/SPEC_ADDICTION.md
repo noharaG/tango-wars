@@ -46,6 +46,13 @@ settings.bgm: true                         // 既存 settings に追加
   - **週末コイン2倍**: 土日のみ type:"coin" mult:2。endsAt=月曜0時
 - 適用: battle.js がスコア計算時に cat イベントを、store.addCoins が coin イベントを参照(`typeof TW.daily !== "undefined"` ガード付きの疎結合)。
 
+## 2.4 デイリーゴースト「昨日の自分と競う」(2026-07-06追加)
+
+- Save に `dayScore: { date: "YYYY-MM-DD", score: number, prev: number }` を追加(store.load で既定値 {date:今日, score:0, prev:0} を補い、日跨ぎで score→prev・scoreを0リセット。prev は「前回プレイ日」のスコアになる)
+- `TW.quest.addSeasonScore(n)` はシーズンスコアと **dayScore.score の両方**に加算する
+- `TW.quest.dailyInfo(): { todayScore, prevScore, beat: boolean /*prev>0 かつ today>prev*/, diff: number /*today-prev*/ }`
+- ホームのシーズンカード内に「今日 ◯◯ vs 昨日 ◯◯」行を追加(週次ゴーストの下)。超えたら「**昨日超え!**」バッジ(金・週次と同トーン)。未達かつ prevScore>0 で差が prevScore の15%以内なら「**あと◯点で昨日超え!**」のニアミス煽りを出す
+
 ## 3. TW.battle 拡張 (js/game/battle.js 編集)
 
 - `start(opts)` 追加オプション: `mode: "blitz"` / `bot: {elo,accuracy,avgMs}`(リベンジ用に相手を固定)
