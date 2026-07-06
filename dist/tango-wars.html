@@ -6073,8 +6073,16 @@ window.TW = window.TW || {};
   ];
 
   // 日付シードでプールから固定3件を決定的に選出。
+  // 当日の保存済み進捗(state.quests.items)があればそれをそのまま返す
+  // (2026-07-06修正: 毎回 done=0 で再生成して返していたため、ホームの
+  //  クエスト進捗表示が常に 0 になっていた。永続化は store.load の日替わり処理の担当)。
   TW.quest.getDaily = function () {
     var seed = TW.util.todayStr();
+    var state = TW.store && TW.store.state;
+    if (state && state.quests && state.quests.date === seed &&
+        state.quests.items && state.quests.items.length) {
+      return state.quests.items;
+    }
     var rng = TW.util.seededRandom(seed);
     var pool = TW.quest.QUEST_POOL.slice();
     for (var i = pool.length - 1; i > 0; i--) {

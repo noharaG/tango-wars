@@ -139,7 +139,7 @@ js/main.js         → TW.router, 起動処理
   - end 内で TW.quest.onAction を適切に呼ぶ ("battle", "win", "review", "newWord", "combo")
 
 ### TW.quest
-- `TW.quest.getDaily(): QuestItem[]` — 日付シードで固定3件。プール: 対局1回(30)/勝利1回(50)/復習20語(30)/新出5語(40)/コンボ15(50)
+- `TW.quest.getDaily(): QuestItem[]` — 日付シードで固定3件。**当日の state.quests.items が存在すればそれ(実進捗入り)を返す**。新規生成した場合の永続化は store.load の日替わり処理が担当。プール: 対局1回(30)/勝利1回(50)/復習20語(30)/新出5語(40)/コンボ15(50)
 - `TW.quest.onAction(type: string, n = 1): void`
 - `TW.quest.claim(id): number|0` — 未達成/受取済は0
 - `TW.quest.seasonInfo(): { weekKey, score, bestPastScore, daysLeft }` — 週替わり時に history へ繰入れ(store.load か ここで遅延処理)
