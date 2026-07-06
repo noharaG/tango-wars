@@ -65,7 +65,7 @@ window.TW.ui = window.TW.ui || {};
           '<div class="word-display feed-word">' + escapeHtml(word.word) + '</div>' +
           (word.ipa ? '<div class="feed-ipa">/' + escapeHtml(word.ipa) + '/</div>' : '') +
           '<button type="button" class="feed-speak-btn" data-role="speak" aria-label="発音を聞く">🔊</button>' +
-          '<div class="feed-meaning" data-role="meaning" hidden>' +
+          '<div class="feed-meaning" data-role="meaning">' +
             '<div class="feed-ja">' + escapeHtml(word.ja) + '</div>' +
             (word.ex ? '<div class="feed-ex">' + escapeHtml(word.ex) + '</div>' : '') +
             (word.exJa ? '<div class="feed-exja">' + escapeHtml(word.exJa) + '</div>' : '') +
@@ -93,12 +93,15 @@ window.TW.ui = window.TW.ui || {};
 
   // ---------- 単語ごとの演出 ----------
 
+  // 意味ブロックは常にレイアウト上に確保しておき(css/feed.css 側で visibility:hidden)、
+  // show クラスで可視化するだけにする。以前は hidden 属性(display:none)を外して
+  // 出現させていたため、開示の瞬間にカード内の高さが変わり、中央寄せされた
+  // カード内要素(ボタン等)がガタっと動いていた(SPEC_ADDICTION §5.3 対応)。
   function revealMeaning(cardEl) {
     var meaningEl = cardEl.querySelector('[data-role="meaning"]');
     var hintEl = cardEl.querySelector('[data-role="hint"]');
-    if (meaningEl && meaningEl.hidden) {
-      meaningEl.hidden = false;
-      window.requestAnimationFrame(function () { meaningEl.classList.add("show"); });
+    if (meaningEl && !meaningEl.classList.contains("show")) {
+      meaningEl.classList.add("show");
     }
     if (hintEl) hintEl.classList.add("hidden");
   }
@@ -127,8 +130,44 @@ window.TW.ui = window.TW.ui || {};
     }
   }
 
+  // scroll-snap-type:y mandatory の下で scrollIntoView({behavior:"smooth"}) を使うと、
+  // ブラウザによってはスナップ吸着とスムーススクロールが押し合ってカクつく既知の相性問題がある。
+  // プログラムスクロールの間だけ snap を無効化し、着地(scrollend、非対応環境は約600msで代替)
+  // したら戻す。手動スワイプ時の snap 挙動には触れない(SPEC_ADDICTION §5.3)。
+  function beginNoSnap(inst) {
+    inst.noSnapCount = (inst.noSnapCount || 0) + 1;
+    inst.scrollEl.classList.add("feed-scroll-nosnap");
+  }
+
+  function endNoSnap(inst) {
+    inst.noSnapCount = Math.max(0, (inst.noSnapCount || 0) - 1);
+    if (inst.noSnapCount === 0 && !inst.destroyed) {
+      inst.scrollEl.classList.remove("feed-scroll-nosnap");
+    }
+  }
+
+  function scrollToNext(inst, cardEl) {
+    var next = cardEl.nextElementSibling;
+    if (!next || typeof next.scrollIntoView !== "function") return;
+    var scrollEl = inst.scrollEl;
+    var done = false;
+    var fallbackTimer = null;
+    function finish() {
+      if (done) return;
+      done = true;
+      scrollEl.removeEventListener("scrollend", finish);
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      endNoSnap(inst);
+    }
+    beginNoSnap(inst);
+    scrollEl.addEventListener("scrollend", finish);
+    fallbackTimer = window.setTimeout(finish, 600);
+    inst.pendingCleanups.push(finish); // 画面離脱時に確実に後始末する
+    next.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   // ✓/✗ → TW.srs.answer + XP+2(SPEC_ADDICTION §5.3)。TW.level は疎結合ガード付きで呼ぶ。
-  function onAnswer(cardEl, word, correct) {
+  function onAnswer(inst, cardEl, word, correct) {
     if (cardEl.classList.contains("answered")) return; // 同じカードへの二重回答を防ぐ
     cardEl.classList.add("answered");
 
@@ -146,11 +185,8 @@ window.TW.ui = window.TW.ui || {};
 
     // 回答したら自動で次のカードへ送る(2026-07-06: 手動スワイプ不要のテンポ優先。スワイプも引き続き可)
     window.setTimeout(function () {
-      if (!cardEl.isConnected) return; // 画面離脱後は何もしない
-      var next = cardEl.nextElementSibling;
-      if (next && typeof next.scrollIntoView === "function") {
-        next.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (inst.destroyed || !cardEl.isConnected) return; // 画面離脱後は何もしない
+      scrollToNext(inst, cardEl);
     }, 400);
   }
 
@@ -191,11 +227,11 @@ window.TW.ui = window.TW.ui || {};
     var unknownBtn = cardEl.querySelector('[data-action="unknown"]');
     if (knowBtn) knowBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
-      onAnswer(cardEl, word, true);
+      onAnswer(inst, cardEl, word, true);
     });
     if (unknownBtn) unknownBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
-      onAnswer(cardEl, word, false);
+      onAnswer(inst, cardEl, word, false);
     });
   }
 
@@ -221,16 +257,24 @@ window.TW.ui = window.TW.ui || {};
 
   // 画面外に流れ去った古いカードをDOMとIntersectionObserverの観測対象から解放する
   // (無限追加によるDOM・イベントリスナー・observer登録の肥大化を防ぐ)。
+  // 現在位置より上のカードを消すとコンテンツ全体が上にシフトし、scrollTop の指す
+  // 位置が実質的にずれて画面が跳ぶ(ブラウザのscroll anchoringに頼らず自前で補正する)。
+  // そのため削除した高さの合計を同一フレーム内(rAFを挟まず)で scrollTop から差し引く。
   function pruneCards(inst, seq) {
     if (inst.destroyed) return;
     var threshold = seq - PRUNE_BEHIND;
+    var removedHeight = 0;
     var child = inst.scrollEl.firstElementChild;
     while (child) {
       var next = child.nextElementSibling;
       if (Number(child.getAttribute("data-seq")) >= threshold) break; // 以降は保持対象
+      removedHeight += child.offsetHeight; // removeChild前に測る
       inst.cardObserver.unobserve(child);
       inst.scrollEl.removeChild(child);
       child = next;
+    }
+    if (removedHeight > 0) {
+      inst.scrollEl.scrollTop -= removedHeight;
     }
   }
 
@@ -301,6 +345,7 @@ window.TW.ui = window.TW.ui || {};
         revealTimer: null,
         activeCardEl: null,
         total: 0,
+        noSnapCount: 0,
         pendingCleanups: []
       };
       active = inst;

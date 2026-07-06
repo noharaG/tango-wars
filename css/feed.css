@@ -48,6 +48,13 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* 回答後の自動送り(scrollIntoView smooth)の間だけ snap を切る。
+   smooth スクロールと scroll-snap-type:y mandatory は環境によって
+   吸着し合ってカクつくため(SPEC_ADDICTION §5.3)。手動スワイプ時は付与されない。 */
+.feed-scroll.feed-scroll-nosnap {
+  scroll-snap-type: none;
+}
+
 .feed-card {
   position: relative;
   width: 100%;
@@ -103,16 +110,20 @@
 
 /* ---------- 意味・例文・コロケーション(タップ or 1.5秒後に自動表示) ---------- */
 
+/* hidden属性(display:none)ではなく visibility で隠す: 最初から高さをレイアウトに
+   確保しておくことで、開示の瞬間にカード内の高さが変わって中央寄せの要素が
+   ガタっと動く問題を防ぐ(SPEC_ADDICTION §5.3)。 */
 .feed-meaning {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  visibility: hidden;
   opacity: 0;
   transform: translateY(6px);
   transition: opacity .3s ease, transform .3s ease;
 }
-.feed-meaning.show { opacity: 1; transform: none; }
+.feed-meaning.show { visibility: visible; opacity: 1; transform: none; }
 
 .feed-ja { font-size: 20px; font-weight: 800; color: var(--gold); }
 .feed-ex { font-family: var(--font-en); font-size: 14px; color: var(--text); line-height: 1.4; }
