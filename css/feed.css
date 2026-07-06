@@ -1,0 +1,185 @@
+/* css/feed.css — ワードフィード画面 (TW.ui.feed) 専用スタイル (SPEC_ADDICTION §5.3)
+   共有クラス(.btn/.card/.badge/.chip/.rarity-n/r/sr/ssr/ur/.word-display/.hidden)は
+   css/style.css 側の定義に依存する。ここでは "feed-" プレフィックスの画面固有クラスのみを書く。
+   TikTok式: position:fixed で画面全体(PCは中央520px列)を占有し、#app の padding を無視する。
+   フィード中は下部ナビを隠す(main.js の NAV_HIDDEN_SCREENS に feed を追加済み)。 */
+
+.feed-screen {
+  position: fixed;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  z-index: 40;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-back-btn {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 14px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(21, 30, 46, .78);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.feed-back-btn:active { transform: scale(.92); }
+
+/* ---------- 縦スクロール(scroll-snap) ---------- */
+
+.feed-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.feed-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 20px;
+}
+
+.feed-card-inner {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.feed-rarity-badge { position: absolute; top: 14px; left: 14px; }
+
+.feed-word { color: var(--text); margin-top: 6px; }
+.feed-ipa { font-size: 15px; color: var(--text-dim); font-family: var(--font-en); }
+
+.feed-speak-btn {
+  border: none;
+  background: var(--card2);
+  color: var(--text);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease;
+}
+.feed-speak-btn:active { transform: scale(.9); }
+
+/* ---------- 意味・例文・コロケーション(タップ or 1.5秒後に自動表示) ---------- */
+
+.feed-meaning {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.feed-meaning.show { opacity: 1; transform: none; }
+
+.feed-ja { font-size: 20px; font-weight: 800; color: var(--gold); }
+.feed-ex { font-family: var(--font-en); font-size: 14px; color: var(--text); line-height: 1.4; }
+.feed-exja { font-size: 13px; color: var(--text-dim); }
+
+.feed-colloc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.feed-tap-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  transition: opacity .2s ease;
+}
+.feed-tap-hint.hidden { opacity: 0; }
+
+/* ---------- ダブルタップ = スカウト(ハート爆発) ---------- */
+
+.feed-heart-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.feed-heart {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 72px;
+  color: var(--fever);
+  transform: translate(-50%, -50%) scale(.3);
+  opacity: 0;
+  animation: feed-heart-pop-kf .9s cubic-bezier(.2, .8, .3, 1) forwards;
+  text-shadow: 0 4px 18px rgba(236, 72, 153, .6);
+}
+@keyframes feed-heart-pop-kf {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  32%  { transform: translate(-50%, -50%) scale(.95); }
+  100% { opacity: 0; transform: translate(-50%, -85%) scale(1.05); }
+}
+
+/* ---------- ✓知ってた / ✗まだ ---------- */
+
+.feed-actions {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 0 20px;
+}
+.feed-answer-btn { flex: 1; font-size: 14px; transition: opacity .2s ease, transform .12s ease; }
+.feed-know-btn { color: var(--green); }
+.feed-unknown-btn { color: var(--red); }
+
+.feed-card.answered .feed-answer-btn { opacity: .4; pointer-events: none; }
+.feed-card.feed-answered-know .feed-know-btn { background: var(--green); color: #06210F; opacity: 1; }
+.feed-card.feed-answered-unknown .feed-unknown-btn { background: var(--red); color: #250808; opacity: 1; }
+
+/* PC: 中央カラム幅の外側は素のダーク背景のまま(style.css の body 制約と整合) */
+@media (min-width: 600px) {
+  .feed-card-inner { max-width: 420px; }
+}

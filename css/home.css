@@ -1,0 +1,739 @@
+/* css/home.css — ホーム画面 (TW.ui.home) + スカウトガチャ (TW.ui.gacha) 専用スタイル
+   共有クラス(.btn/.card/.bar/.bar-fill/.chip/.modal-backdrop/.modal/.badge/.rarity-*) は
+   css/style.css 側の定義に依存する。ここでは home 画面固有のレイアウト・演出のみを書く。 */
+
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 14px 96px; /* 下部固定ナビの高さ分の余白 */
+}
+
+/* ---------- 1. 段位カード ---------- */
+
+.home-rank-card { padding: 18px 18px 14px; }
+
+.home-rank-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.home-rank-name {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--rank);
+  line-height: 1;
+  letter-spacing: .01em;
+}
+
+.home-rank-side {
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home-elo span, .home-streak span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.home-rank-bar { height: 12px; position: relative; overflow: hidden; }
+
+.home-rank-bar .bar-fill {
+  /* 注意: position を relative にすると共有 .bar>.bar-fill(absolute+inset:0)の
+     高さの根拠が消えてバーが0pxになる(2026-07-06のバグ)。position は共有側に任せる */
+  background: linear-gradient(90deg, var(--accent), var(--rank));
+}
+
+.home-rank-bar .bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: home-bar-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes home-bar-shine {
+  0%   { transform: translateX(-120%); }
+  55%  { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+.home-rank-progress-label {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-rank-progress-label b {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-left: 2px;
+}
+
+/* 達成率90%以上: 数字を金色に光らせて「あと少し」を煽る */
+.home-rank-progress-label.hot b {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(245, 158, 11, .6);
+}
+
+/* 昇級煽りバッジ (Phase2 SPEC_ADDICTION §5.1): 達成率75%以上で段位カードに表示 */
+.home-promo-badge {
+  margin-top: 8px;
+  text-align: center;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, .16);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 13px;
+  animation: home-gold-glow 1s ease-in-out infinite alternate;
+}
+
+/* ---------- 1b. XPバー (Phase2 SPEC_ADDICTION §5.1) ---------- */
+
+.home-xp-card { padding: 12px 16px; }
+
+.home-xp-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.home-xp-level {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.home-xp-nums {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.home-xp-bar { height: 9px; }
+
+.home-xp-bar .bar-fill {
+  background: linear-gradient(90deg, var(--gold), var(--ssr));
+}
+
+/* ---------- 2. 対局ボタン ---------- */
+
+.home-battle-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-battle-row {
+  display: flex;
+  gap: 8px;
+}
+
+.home-battle-btn {
+  width: 100%;
+  height: 64px;
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), #2563EB);
+  animation: home-pulse 2s ease-in-out infinite;
+}
+
+/* 対局ボタンの隣に並ぶ時は幅を伸縮させる(Phase2: ブリッツ60ボタンと横並び) */
+.home-battle-row .home-battle-btn {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+@keyframes home-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+
+/* ブリッツ60ボタン (Phase2 SPEC_ADDICTION §5.1): 対局ボタンの隣に小さめで配置 */
+.home-blitz-btn {
+  flex: 0 0 84px;
+  height: 64px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.home-train-btn {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-due-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+}
+
+/* ワードフィードボタン (Phase2 SPEC_ADDICTION §5.1) */
+.home-feed-btn {
+  width: 100%;
+  height: 40px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ---------- 2b. 復習溢れゲージ (Phase2 SPEC_ADDICTION §5.1) ---------- */
+
+.home-due-card { cursor: pointer; }
+
+.home-due-bar { height: 10px; margin-top: 2px; }
+
+.home-due-bar .bar-fill {
+  background: linear-gradient(90deg, var(--accent), var(--red));
+}
+
+.home-due-label {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.home-due-overflow {
+  animation: home-red-pulse 1s ease-in-out infinite;
+}
+
+.home-due-overflow .home-due-label {
+  color: var(--red);
+  font-weight: 700;
+}
+
+@keyframes home-red-pulse {
+  0%, 100% { box-shadow: var(--shadow-card), 0 0 0 rgba(239, 68, 68, 0); }
+  50%      { box-shadow: var(--shadow-card), 0 0 16px 3px rgba(239, 68, 68, .55); }
+}
+
+/* ---------- 2c. ブーストゲージ (Phase2 SPEC_ADDICTION §2.2/§5.1) ---------- */
+
+.home-boost-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.home-boost-charge {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-boost-slots {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.home-boost-slot {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card2);
+  color: var(--text-dim);
+  font-size: 16px;
+  opacity: .4;
+}
+
+.home-boost-slot.filled {
+  background: linear-gradient(135deg, var(--gold), #FBBF24);
+  color: #1B1200;
+  opacity: 1;
+}
+
+.home-boost-overflow {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.home-boost-card.home-boost-full {
+  animation: home-boost-full-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes home-boost-full-pulse {
+  0%, 100% { box-shadow: var(--shadow-card), 0 0 0 rgba(245, 158, 11, 0); }
+  50%      { box-shadow: var(--shadow-card), 0 0 18px 4px rgba(245, 158, 11, .6); }
+}
+
+.home-boost-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 13.5px;
+}
+
+.home-boost-btn.ready {
+  background: var(--gold);
+  color: #1B1200;
+  border-color: var(--gold);
+}
+
+/* ---------- 2d. イベントカード (Phase2 SPEC_ADDICTION §2.3/§5.1) ---------- */
+
+.home-event-item {
+  padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.home-event-item:first-of-type { border-top: none; padding-top: 0; }
+
+.home-event-name { font-size: 14px; font-weight: 700; }
+
+.home-event-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+.home-event-countdown {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--rank);
+  font-weight: 700;
+}
+
+/* ---------- 3. デイリークエスト ---------- */
+
+.home-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: .02em;
+}
+
+.home-quest-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.home-quest-item:first-of-type { border-top: none; padding-top: 0; }
+
+.home-quest-text { grid-column: 1; grid-row: 1; font-size: 14px; }
+
+.home-quest-bar { grid-column: 1; grid-row: 2; height: 8px; margin-top: 5px; }
+
+.home-quest-claim {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 78px;
+  height: 40px;
+  font-size: 12.5px;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-quest-claim.ready {
+  background: var(--gold);
+  color: #1B1200;
+  border-color: var(--gold);
+  animation: home-gold-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes home-gold-glow {
+  from { box-shadow: 0 0 6px 1px var(--gold); }
+  to   { box-shadow: 0 0 16px 5px var(--gold); }
+}
+
+/* ---------- 4. シーズンカード ---------- */
+
+.home-season-week {
+  color: var(--text-dim);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.home-season-scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 6px 0;
+}
+
+.home-season-score-block { text-align: center; min-width: 70px; }
+
+.home-season-label { font-size: 12px; color: var(--text-dim); }
+
+.home-season-value {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.home-season-ghost { color: var(--text-dim); }
+
+.home-season-vs { font-size: 12px; color: var(--text-dim); }
+
+.home-season-beat {
+  text-align: center;
+  color: var(--gold);
+  font-weight: 800;
+  margin-top: 2px;
+  animation: home-gold-glow 1s ease-in-out infinite alternate;
+}
+
+.home-season-days {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ---------- 5. ガチャカード ---------- */
+
+.home-gacha-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-gacha-title { font-weight: 700; font-size: 15px; }
+
+.home-gacha-coins {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-gacha-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.home-gacha-btn {
+  white-space: nowrap;
+  height: 52px;
+  padding: 0 16px;
+}
+
+/* チケットで引く(無料) — Phase2 SPEC_ADDICTION §5.1 */
+.home-gacha-ticket-btn {
+  height: 40px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+@keyframes home-shake-kf {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+
+.home-shake { animation: home-shake-kf .2s linear; }
+
+/* ---------- 6. 英作文ロックカード ---------- */
+
+.home-lock-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: .55;
+  filter: grayscale(.35);
+}
+
+.home-lock-icon { font-size: 22px; }
+
+.home-lock-text { font-size: 14px; }
+
+/* ---------- ログインボーナスモーダル (Phase2 SPEC_ADDICTION §2.1/§5.1) ---------- */
+/* .modal-backdrop / .modal は css/style.css 側の共通コンポーネントを利用する。 */
+
+.home-login-modal { max-width: 360px; text-align: center; }
+
+.home-login-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.home-login-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.home-login-cell {
+  position: relative;
+  padding: 8px 4px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.home-login-daynum { font-weight: 700; font-size: 11px; }
+
+.home-login-reward {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-login-cell.done {
+  opacity: .55;
+}
+
+.home-login-cell.future {
+  opacity: .5;
+}
+
+.home-login-cell.today {
+  cursor: pointer;
+  border-color: var(--gold);
+  background: rgba(245, 158, 11, .14);
+  animation: home-login-today-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes home-login-today-glow {
+  from { box-shadow: 0 0 6px 1px var(--gold); }
+  to   { box-shadow: 0 0 14px 4px var(--gold); }
+}
+
+.home-login-cell.claimed {
+  animation: none;
+  border-color: var(--green);
+  background: rgba(34, 197, 94, .14);
+}
+
+.home-login-check {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.home-login-hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.home-login-fly {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, 0);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold);
+  white-space: nowrap;
+  animation: home-login-fly-up .65s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes home-login-fly-up {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
+  25%  { opacity: 1; transform: translate(-50%, -10px) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -46px) scale(1); }
+}
+
+/* ---------- ガチャ全画面オーバーレイ ---------- */
+
+.gacha-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(6, 10, 20, .92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.gacha-overlay.show { opacity: 1; }
+
+.gacha-title { font-size: 20px; font-weight: 800; color: var(--text); }
+
+.gacha-hint { font-size: 13px; color: var(--text-dim); margin-top: -14px; }
+
+.gacha-cards {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gacha-card {
+  width: 96px;
+  height: 140px;
+  perspective: 800px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gacha-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform .5s cubic-bezier(.2, .7, .3, 1);
+  transform-style: preserve-3d;
+}
+
+.gacha-card.flipped .gacha-card-inner { transform: rotateY(180deg); }
+
+.gacha-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+
+.gacha-card-back {
+  background: var(--card2);
+  border: 2px solid rgba(255,255,255,.15);
+}
+
+.gacha-card-mark {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.gacha-card.gacha-aura-ssr .gacha-card-back {
+  border-color: var(--ssr);
+  box-shadow: 0 0 18px 4px var(--ssr);
+  animation: gacha-aura-pulse 1.1s ease-in-out infinite;
+}
+
+.gacha-card.gacha-aura-ur .gacha-card-back {
+  border: none;
+  background: var(--ur);
+  box-shadow: 0 0 22px 6px var(--fever);
+  animation: gacha-aura-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes gacha-aura-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.4); }
+}
+
+.gacha-card-front {
+  transform: rotateY(180deg);
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  text-align: center;
+  color: #0B1220;
+  /* 表面はレア度色のベタ背景。共有 .rarity-* は --rarity-color と枠しか付けないため背景はここで塗る */
+  background: var(--rarity-color, var(--card2));
+}
+
+.gacha-card-front.rarity-ur {
+  background: var(--ur);
+  background-size: 100% 100%;
+  animation: none;
+  color: #0B1220;
+}
+
+.gacha-card-rarity { font-size: 11px; font-weight: 800; opacity: .85; }
+
+.gacha-card-word { font-size: 16px; font-weight: 800; word-break: break-word; line-height: 1.15; }
+
+.gacha-card-ja { font-size: 11.5px; opacity: .9; }
+
+.gacha-close {
+  width: 220px;
+  transition: opacity .2s;
+}
+
+.gacha-close[disabled] { opacity: .35; }
+
+.gacha-close.ready {
+  box-shadow: 0 0 16px 4px var(--gold);
+}
+
+/* ---------- ガチャのニアミス演出 (Phase2 SPEC_ADDICTION §5.1) ---------- */
+/* R/SR排出時30%: 金オーラが立ち上がる→寸前で色が落ちて開示、の間に「惜しい!!」を出す */
+
+.gacha-card.near-miss-gold .gacha-card-back {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px 6px var(--gold);
+  animation: gacha-near-miss-rise .55s ease-out forwards;
+}
+
+@keyframes gacha-near-miss-rise {
+  0%   { filter: brightness(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  100% { filter: brightness(1.6); box-shadow: 0 0 26px 8px var(--gold); }
+}
+
+.gacha-card.near-miss-drop .gacha-card-back {
+  border-color: rgba(255,255,255,.15);
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  filter: brightness(1);
+  transition: filter .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.gacha-near-miss-text {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) scale(1.3);
+  z-index: 1;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--red);
+  text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  animation: gacha-near-miss-pop .82s cubic-bezier(.2,.8,.2,1) forwards;
+  pointer-events: none;
+}
+
+@keyframes gacha-near-miss-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
+}
+
+/* PC: 中央カラム幅に収める(index.html 側で #app に max-width 520px が付く前提) */
+@media (min-width: 600px) {
+  .home-screen { padding-bottom: 32px; }
+}

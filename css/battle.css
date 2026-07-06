@@ -1,0 +1,637 @@
+/* css/battle.css — バトル画面 (TW.ui.battle) + リザルト画面 (TW.ui.result) + TW.fx 演出専用スタイル
+   共有クラス(.btn/.btn-primary/.btn-big/.card/.bar/.bar-fill/.badge/.rarity-*/.hidden/.tabular-nums/
+   .word-display)は css/style.css 側の定義に依存する。ここでは battle/result 画面固有のレイアウト・
+   演出と、TW.fx(js/ui/fx.js)が使う #fx-canvas 由来のポップスコア/シェイク/フラッシュの見た目を書く。
+   (#fx-canvas 自体の配置と #cutin のカットイン帯アニメは css/style.css 側で定義済み) */
+
+/* ==========================================================================
+   バトル中は下部ナビを隠す(body.in-battle をJS側が付け外しする / SPEC_UI・タスク指示)
+   ========================================================================== */
+body.in-battle #bottom-nav { display: none; }
+
+/* ==========================================================================
+   1. バトル画面レイアウト (SPEC_UI §2.2)
+   ========================================================================== */
+
+.battle-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: calc(100vh - 32px);
+}
+
+/* ---- 上部: モードラベル・残り時間バー・対向スコア ---- */
+
+.battle-top { padding: 14px 16px 16px; }
+
+.battle-mode-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.battle-timer { height: 8px; margin-bottom: 14px; }
+.battle-timer .bar-fill { background: linear-gradient(90deg, var(--accent), var(--rank)); }
+.battle-timer.battle-timer-danger .bar-fill {
+  background: var(--red);
+  animation: battle-timer-blink-kf .5s linear infinite;
+}
+@keyframes battle-timer-blink-kf { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+.battle-vs-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.battle-vs-side { flex: 1; min-width: 0; }
+.battle-vs-bot { text-align: right; }
+.battle-vs-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.battle-bot-rank {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--card2);
+  color: var(--rank);
+  font-size: 11px;
+  font-weight: 700;
+}
+.battle-vs-score {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.battle-vs-me .battle-vs-score { color: var(--accent); }
+.battle-vs-bot .battle-vs-score { color: var(--red); }
+.battle-vs-mid { align-self: center; font-size: 12px; color: var(--text-dim); font-weight: 700; padding: 18px 4px 0; }
+
+.battle-vs-bars { display: flex; gap: 6px; height: 8px; }
+.battle-vs-bar { flex: 1; height: 8px; }
+.battle-vs-bar-me .bar-fill { background: var(--accent); }
+.battle-vs-bar-bot { direction: rtl; }
+.battle-vs-bar-bot .bar-fill { background: var(--red); }
+
+.battle-combo-badge {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  height: 24px;
+  padding: 0 10px;
+  background: linear-gradient(135deg, var(--gold), #FCD34D);
+  color: #12181F;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, .5);
+}
+
+/* ---- 中央: 出題カード ---- */
+
+.battle-mid { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 190px; }
+
+.battle-question-card {
+  width: 100%;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  transition: box-shadow .3s ease, border-color .3s ease;
+  border: 1px solid transparent;
+}
+.battle-question-card.battle-fever-glow {
+  box-shadow: var(--shadow-card), 0 0 26px rgba(236, 72, 153, .65);
+  border-color: rgba(236, 72, 153, .55);
+}
+
+.battle-fever-bar {
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  right: 16px;
+  width: auto;
+  height: 5px;
+}
+.battle-fever-bar .bar-fill {
+  background: linear-gradient(90deg, var(--fever), #F472B6);
+  transition: width .2s linear;
+}
+
+.battle-q-en, .battle-q-listen, .battle-q-ja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.battle-word { color: var(--text); }
+.battle-ipa { font-size: 14px; color: var(--text-dim); font-family: var(--font-en); }
+
+.battle-speak-btn {
+  border: none;
+  background: var(--card2);
+  color: var(--text);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease;
+}
+.battle-speak-btn:active { transform: scale(.92); }
+.battle-speak-big {
+  width: 78px;
+  height: 78px;
+  font-size: 34px;
+  background: linear-gradient(135deg, var(--accent), #60A5FA);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, .4);
+}
+.battle-replay-btn { font-size: 14px; color: var(--text-dim); }
+
+.battle-prompt-ja {
+  font-size: clamp(24px, 7vw, 34px);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+/* ---- cloze(例文穴埋め): 英文はやや小さめ、下にexJa和訳ヒントを小さく併記 ---- */
+.battle-q-cloze { padding: 0 6px; }
+.battle-cloze-ex {
+  font-family: var(--font-en);
+  font-size: clamp(17px, 5vw, 22px);
+  font-weight: 700;
+  line-height: 1.5;
+}
+.battle-cloze-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* ---- 下半分: 回答エリア(4択 or タイピング) ---- */
+
+.battle-answer-area { min-height: 128px; }
+
+.battle-choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.battle-choice-btn {
+  min-height: 64px;
+  padding: 8px 10px;
+  font-size: 15px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.3;
+}
+.battle-choice-en { font-family: var(--font-en); font-weight: 700; font-size: 17px; }
+
+/* 誤答時の正解ハイライト(SPEC_UI §2.2改修: 控えめなハイライトでは視認できないため
+   2026-07-05に強化。緑ベタ塗り+白太字+外側発光+軽いパルスで確実に目に留まるようにする) */
+.battle-choice-correct-reveal {
+  position: relative;
+  z-index: 1;
+  background: var(--green);
+  color: #fff;
+  font-weight: 800;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .6), 0 0 28px 4px rgba(34, 197, 94, .85);
+  animation: battle-correct-reveal-pulse-kf 1s ease-in-out infinite;
+}
+@keyframes battle-correct-reveal-pulse-kf {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(34, 197, 94, .6), 0 0 28px 4px rgba(34, 197, 94, .85); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 5px rgba(34, 197, 94, .75), 0 0 36px 6px rgba(34, 197, 94, 1); }
+}
+
+/* 誤答時、正解以外の選択肢(誤選択したものも含む)を減光する(SPEC_UI §2.2改修)。
+   問題ごとに #bt-answer-area の innerHTML を差し替えるため、次の問題では自然に外れる。 */
+.battle-choice-dim {
+  opacity: .3;
+  transition: opacity .25s ease;
+}
+
+.battle-typing-area { display: flex; flex-direction: column; gap: 10px; }
+.battle-typing-hint {
+  font-family: var(--font-en);
+  letter-spacing: .18em;
+  color: var(--text-dim);
+  font-size: 16px;
+  text-align: center;
+}
+.battle-typing-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 2px solid var(--card2);
+  background: var(--card2);
+  color: var(--text);
+  font-family: var(--font-en);
+  font-size: 20px;
+  text-align: center;
+}
+.battle-typing-input:focus { outline: none; border-color: var(--accent); }
+.battle-typing-submit { margin-top: 2px; }
+.battle-typing-reveal {
+  min-height: 26px;
+  text-align: center;
+  color: var(--green);
+  font-weight: 800;
+  font-size: 19px;
+  text-shadow: 0 0 14px rgba(34, 197, 94, .55);
+}
+
+/* ---- 正誤フラッシュ(TW.fx.flash(el, colorClass) から付与される) ---- */
+
+.battle-flash-correct { animation: battle-flash-correct-kf .42s ease; }
+@keyframes battle-flash-correct-kf {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .9); background: rgba(34, 197, 94, .35); }
+  100% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
+}
+.battle-flash-wrong { animation: battle-flash-wrong-kf .42s ease; }
+@keyframes battle-flash-wrong-kf {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, .9); background: rgba(239, 68, 68, .35); }
+  100% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+}
+
+/* ==========================================================================
+   2. TW.fx 演出の見た目 (js/ui/fx.js が付与するクラス)
+   ========================================================================== */
+
+.fx-popscore {
+  position: fixed;
+  z-index: 95;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .55);
+  pointer-events: none;
+  animation: fx-pop-rise-kf .75s ease-out forwards;
+}
+@keyframes fx-pop-rise-kf {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  15% { opacity: 1; transform: translate(-50%, -62%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -170%) scale(1); }
+}
+
+.fx-shake { animation: fx-shake-kf .22s linear; }
+@keyframes fx-shake-kf {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-3px); }
+}
+
+/* 汎用フォールバック(flash呼び出し時にcolorClass省略された場合用) */
+.fx-flash { animation: fx-flash-kf .4s ease; }
+@keyframes fx-flash-kf {
+  0% { filter: brightness(1.6); }
+  100% { filter: brightness(1); }
+}
+
+/* ==========================================================================
+   3. リザルト画面 (SPEC_UI §2.3) — 時間差(300ms間隔)で .result-stage に .show を付与する
+   ========================================================================== */
+
+.result-screen { display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; }
+
+.result-stage {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.result-stage.show { opacity: 1; transform: none; }
+
+.result-banner {
+  font-size: 44px;
+  font-weight: 900;
+  text-align: center;
+  padding: 20px 0 4px;
+  letter-spacing: .03em;
+}
+.result-banner.win { color: var(--gold); text-shadow: 0 2px 18px rgba(245, 158, 11, .55); }
+.result-banner.lose { color: var(--text-dim); }
+
+.result-score-row { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.result-score-side { text-align: center; flex: 1; }
+.result-score-label { font-size: 12px; color: var(--text-dim); font-weight: 700; margin-bottom: 4px; }
+.result-score-value { font-size: 32px; font-weight: 800; }
+.result-score-vs { font-size: 16px; color: var(--text-dim); }
+
+.result-correct-line { text-align: center; color: var(--text-dim); font-size: 13px; }
+.result-fever-line {
+  text-align: center;
+  color: var(--fever);
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: -6px;
+}
+
+.result-rank-block { text-align: center; }
+.result-rank-name { font-size: 28px; font-weight: 800; color: var(--rank); margin-bottom: 8px; }
+.result-rank-bar { margin-bottom: 6px; }
+.result-rank-bar .bar-fill { width: 0%; }
+.result-rank-delta { font-size: 13px; color: var(--text-dim); }
+
+.result-section-title { font-size: 14px; font-weight: 700; color: var(--text-dim); margin-bottom: 10px; }
+
+.result-captured-section { padding-bottom: 14px; }
+.result-quest-section { padding-bottom: 14px; }
+
+.result-captured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.result-captured-card {
+  padding: 10px;
+  text-align: center;
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .3s ease, transform .3s cubic-bezier(.2, .9, .3, 1.3);
+}
+.result-captured-card.show { opacity: 1; transform: scale(1); }
+.result-captured-rarity { font-size: 10px; color: var(--text-dim); font-weight: 700; }
+.result-captured-word { font-family: var(--font-en); font-weight: 700; font-size: 15px; margin: 4px 0 2px; }
+.result-captured-ja { font-size: 12px; color: var(--text-dim); }
+.result-kira-tag {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: var(--gold);
+  color: #12181F;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.result-captured-card.kira { animation: result-kira-pulse-kf 1.6s ease-in-out infinite; }
+@keyframes result-kira-pulse-kf {
+  0%, 100% { box-shadow: var(--shadow-card), 0 0 10px rgba(245, 158, 11, .4); }
+  50% { box-shadow: var(--shadow-card), 0 0 22px rgba(245, 158, 11, .85); }
+}
+
+.result-coin-line { text-align: center; font-size: 16px; font-weight: 700; color: var(--gold); }
+
+.result-quest-item { margin-bottom: 8px; }
+.result-quest-label { font-size: 13px; margin-bottom: 4px; }
+.result-quest-bar { margin-bottom: 4px; }
+.result-quest-text { font-size: 12px; color: var(--text-dim); text-align: right; }
+
+.result-actions { display: flex; flex-direction: column; gap: 10px; }
+.result-again-btn { font-size: 20px; }
+.result-home-btn { color: var(--text-dim); }
+
+/* 昇級時の全画面演出(gacha-overlay等と同様、body直下に一時追加するオーバーレイ) */
+.result-promo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 18, 32, .85);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.result-promo-overlay.show { opacity: 1; }
+.result-promo-label {
+  font-size: 20px;
+  color: var(--gold);
+  font-weight: 800;
+  letter-spacing: .12em;
+  margin-bottom: 8px;
+}
+.result-promo-name {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 22px rgba(245, 158, 11, .6);
+  animation: result-promo-pop-kf .5s cubic-bezier(.2, .9, .3, 1.3);
+}
+@keyframes result-promo-pop-kf {
+  0% { transform: scale(.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-achv-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  transform: translate(-50%, 20px);
+  background: var(--card2);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  transition: opacity .3s ease, transform .3s ease;
+  z-index: 90;
+  max-width: 90%;
+  text-align: center;
+}
+.result-achv-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ==========================================================================
+   4. SPEC_ADDICTION §5.2 追加分
+      (ブリッツUI/強化週間バッジ/BGM結線は見た目を持たない/XPバー・LEVEL UP/ニアミス・リベンジ)
+   ========================================================================== */
+
+/* ---- ブリッツ: 対向バーを「自己ベスト」ゴースト色(ゴールド)に(battle-vs-bot構造を再利用) ---- */
+.battle-top-blitz .battle-vs-ghost .battle-vs-score { color: var(--gold); }
+.battle-top-blitz .battle-vs-bar-bot .bar-fill { background: var(--gold); }
+
+/* ---- 強化週間「×N」バッジ(出題カード左上。.battle-fever-barと重ならない位置) ---- */
+.battle-event-badge {
+  position: absolute;
+  top: 20px;
+  left: 14px;
+  background: linear-gradient(135deg, var(--sr), #C084FC);
+  box-shadow: 0 2px 10px rgba(168, 85, 247, .5);
+}
+
+/* ---- ブリッツ: 1問3秒の円形タイマー(出題カード右上) ---- */
+.battle-blitz-ring {
+  position: absolute;
+  top: 16px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+}
+.battle-blitz-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.battle-blitz-ring-bg {
+  fill: none;
+  stroke: var(--card2);
+  stroke-width: 5;
+}
+.battle-blitz-ring-fg {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 163.36;
+  stroke-dashoffset: 0;
+  /* JS側のBLITZ_QUESTION_MS(3000ms)と一致させること */
+  animation: battle-blitz-ring-kf 3s linear forwards;
+}
+@keyframes battle-blitz-ring-kf {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 163.36; }
+}
+
+/* ---- ニアミス「あと◯点だった!!」(result-stageの表示アニメは既存共通クラスに乗る) ---- */
+.result-near-miss {
+  text-align: center;
+  color: var(--red);
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: -6px;
+  text-shadow: 0 2px 10px rgba(239, 68, 68, .5);
+}
+
+/* ---- 🔥リベンジボタン: 「もう1局」より目立たせる ---- */
+.result-revenge-btn {
+  background: linear-gradient(135deg, var(--red), #F87171);
+  box-shadow: 0 4px 18px rgba(239, 68, 68, .55);
+  animation: result-revenge-pulse-kf 1.4s ease-in-out infinite;
+}
+@keyframes result-revenge-pulse-kf {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ---- XPバー(レベル・獲得XP) ---- */
+.result-xp-section { padding-bottom: 14px; }
+.result-xp-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.result-xp-level { font-size: 18px; font-weight: 800; color: var(--accent); }
+.result-xp-gain { font-size: 14px; font-weight: 700; color: var(--gold); }
+.result-xp-bar { margin-bottom: 6px; }
+.result-xp-bar .bar-fill { width: 0%; }
+.result-xp-need { font-size: 12px; color: var(--text-dim); text-align: right; }
+
+/* ---- ブリッツ結果(自己ベスト比較) ---- */
+.result-blitz-block { text-align: center; }
+.result-blitz-label { font-size: 13px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
+.result-blitz-newbest {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 6px;
+  text-shadow: 0 2px 12px rgba(245, 158, 11, .55);
+}
+.result-blitz-scores { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+.result-blitz-score { font-size: 28px; font-weight: 800; }
+.result-blitz-best-label { font-size: 13px; color: var(--text-dim); }
+.result-blitz-block.is-new-best { box-shadow: var(--shadow-card), 0 0 20px rgba(245, 158, 11, .5); }
+
+/* ---- LEVEL UP全画面演出(昇級演出result-promo-overlayとは別イベントなので独立させる) ---- */
+.result-levelup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 18, 32, .85);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.result-levelup-overlay.show { opacity: 1; }
+.result-levelup-label {
+  font-size: 20px;
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: .12em;
+  margin-bottom: 8px;
+}
+.result-levelup-name {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 22px rgba(59, 130, 246, .6);
+  animation: result-promo-pop-kf .5s cubic-bezier(.2, .9, .3, 1.3);
+}
+.result-levelup-reward {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ==========================================================================
+   5. フィーバーチェイン Lv2〜4 (2026-07-05改修): body の .fever に加え
+      .fever-lv2/.fever-lv3/.fever-lv4 をJS側(battle-ui.js)が付け外しする。
+      背景アニメ(body::before/::after は css/style.css で定義)の彩度・速度と
+      出題カード縁の発光をLvに応じて段階的に強める。GPU負荷は既存アニメの
+      duration短縮・色調変更のみで、レイヤー数自体は増やさない。
+   ========================================================================== */
+body.fever.fever-lv2::before {
+  background: radial-gradient(circle at 30% 30%, rgba(236, 72, 153, .7), transparent 62%);
+  animation-duration: 4.5s;
+}
+body.fever.fever-lv2::after {
+  background: radial-gradient(circle at 70% 70%, rgba(59, 130, 246, .6), transparent 62%);
+  animation-duration: 6s;
+}
+body.fever.fever-lv3::before {
+  background: radial-gradient(circle at 30% 30%, rgba(236, 72, 153, .85), rgba(245, 158, 11, .3) 45%, transparent 68%);
+  animation-duration: 3.2s;
+}
+body.fever.fever-lv3::after {
+  background: radial-gradient(circle at 70% 70%, rgba(59, 130, 246, .75), rgba(168, 85, 247, .3) 45%, transparent 68%);
+  animation-duration: 4.2s;
+}
+body.fever.fever-lv4::before {
+  background: radial-gradient(circle at 30% 30%, rgba(236, 72, 153, 1), rgba(245, 158, 11, .45) 40%, transparent 72%);
+  animation-duration: 2.2s;
+}
+body.fever.fever-lv4::after {
+  background: radial-gradient(circle at 70% 70%, rgba(59, 130, 246, .9), rgba(168, 85, 247, .45) 40%, transparent 72%);
+  animation-duration: 3s;
+}
+
+/* 出題カード縁の発光をLvで段階的に強める(.battle-fever-glow自体はSPEC_UI既存クラス) */
+body.fever-lv2 .battle-question-card.battle-fever-glow {
+  box-shadow: var(--shadow-card), 0 0 34px rgba(236, 72, 153, .8);
+  border-color: rgba(236, 72, 153, .75);
+}
+body.fever-lv3 .battle-question-card.battle-fever-glow {
+  box-shadow: var(--shadow-card), 0 0 42px rgba(236, 72, 153, .9), 0 0 18px rgba(245, 158, 11, .5);
+  border-color: rgba(245, 158, 11, .7);
+  animation: battle-fever-glow-pulse-kf 1s ease-in-out infinite;
+}
+body.fever-lv4 .battle-question-card.battle-fever-glow {
+  box-shadow: var(--shadow-card), 0 0 54px rgba(236, 72, 153, 1), 0 0 26px rgba(245, 158, 11, .7);
+  border-color: rgba(245, 158, 11, .9);
+  animation: battle-fever-glow-pulse-kf .6s ease-in-out infinite;
+}
+@keyframes battle-fever-glow-pulse-kf {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}

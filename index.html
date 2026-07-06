@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0B1220">
+<title>単語ウォーズ</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwQjEyMjAiLz48dGV4dCB4PSIyNyIgeT0iNDQiIGZvbnQtc2l6ZT0iMzQiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSInSGlyYWdpbm8gS2FrdSBHb3RoaWMgUHJvTicsJ1l1IEdvdGhpYyBVSScsJ05vdG8gU2FucyBKUCcsc2Fucy1zZXJpZiIgZmlsbD0iIzNCODJGNiI+5Y2YPC90ZXh0Pjx0ZXh0IHg9IjQ5IiB5PSIyMCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0Y1OUUwQiI+4pqUPC90ZXh0Pjwvc3ZnPgo=">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwQjEyMjAiLz48dGV4dCB4PSIyNyIgeT0iNDQiIGZvbnQtc2l6ZT0iMzQiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSInSGlyYWdpbm8gS2FrdSBHb3RoaWMgUHJvTicsJ1l1IEdvdGhpYyBVSScsJ05vdG8gU2FucyBKUCcsc2Fucy1zZXJpZiIgZmlsbD0iIzNCODJGNiI+5Y2YPC90ZXh0Pjx0ZXh0IHg9IjQ5IiB5PSIyMCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0Y1OUUwQiI+4pqUPC90ZXh0Pjwvc3ZnPgo=">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/battle.css">
+<link rel="stylesheet" href="css/meta.css">
+<link rel="stylesheet" href="css/feed.css">
+</head>
+<body>
+<div id="app"></div>
+<canvas id="fx-canvas"></canvas>
+<div id="cutin"></div>
+
+<nav id="bottom-nav">
+  <button class="nav-btn active" type="button" data-screen="home">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 11l9-7 9 7"/>
+      <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>
+    </svg>
+    <span>ホーム</span>
+  </button>
+  <button class="nav-btn" type="button" data-screen="collection">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+    <span>図鑑</span>
+  </button>
+  <button class="nav-btn" type="button" data-screen="stats">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 20V10"/>
+      <path d="M12 20V4"/>
+      <path d="M20 20v-7"/>
+    </svg>
+    <span>統計</span>
+  </button>
+  <button class="nav-btn" type="button" data-screen="settings">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    <span>設定</span>
+  </button>
+  <button class="nav-btn" type="button" data-screen="feed">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4" y="3" width="16" height="18" rx="2.5"/>
+      <path d="M8 8h8"/>
+      <path d="M8 12h8"/>
+      <path d="M8 16h5"/>
+    </svg>
+    <span>フィード</span>
+  </button>
+</nav>
+
+<script src="data/words.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/audio/sfx.js"></script>
+<script src="js/audio/bgm.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/srs.js"></script>
+<script src="js/core/rating.js"></script>
+<script src="js/core/quest.js"></script>
+<script src="js/core/level.js"></script>
+<script src="js/core/daily.js"></script>
+<script src="js/game/battle.js"></script>
+<script src="js/ui/fx.js"></script>
+<script src="js/ui/battle-ui.js"></script>
+<script src="js/ui/home.js"></script>
+<script src="js/ui/feed.js"></script>
+<script src="js/ui/collection.js"></script>
+<script src="js/ui/stats.js"></script>
+<script src="js/main.js"></script>
+<script>
+  // http(s) 配信時 (localhost含む) のみ Service Worker を登録。file:// では何もしない。
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
