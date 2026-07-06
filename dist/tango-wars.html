@@ -7123,7 +7123,8 @@ window.TW = window.TW || {};
       botScore: finalBotScore,
       eloAfter: histState.elo,
       correct: this.correct,
-      total: this.total
+      total: this.total,
+      maxCombo: this.maxCombo // 2026-07-06追加: 統計画面の「最大コンボ」が常に0だったバグの修正
     });
 
     TW.quest.onAction("battle", 1);

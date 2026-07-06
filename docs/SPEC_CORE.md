@@ -51,7 +51,7 @@ Save = {
   quests: { date: "YYYY-MM-DD", items: [{ id, done: number, goal: number, claimed: bool }] },
   season: { weekKey: "2026-W27", score: number, history: [{ weekKey, score }] },  // history は過去週
   achievements: string[], // 解除済み実績id
-  history: [{ t: number, mode: string, win: bool, score: number, botScore: number, eloAfter: number, correct: number, total: number }],
+  history: [{ t: number, mode: string, win: bool, score: number, botScore: number, eloAfter: number, correct: number, total: number, maxCombo: number /*2026-07-06追加。旧エントリには無いので読む側は||0で扱う*/ }],
   newPerDay: { date: "YYYY-MM-DD", count: number },
   settings: { sound: bool, typing: bool, newWordsPerDay: number /*既定20*/, voice: bool }
 }
