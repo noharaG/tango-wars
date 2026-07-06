@@ -8574,10 +8574,12 @@ window.TW = window.TW || {};
 
   function fmtCountdown(endsAt) {
     var ms = Math.max(0, endsAt - Date.now());
-    var totalMin = Math.floor(ms / 60000);
-    var hh = Math.floor(totalMin / 60);
-    var mm = totalMin % 60;
-    return "残り" + pad2(hh) + ":" + pad2(mm);
+    var totalSec = Math.floor(ms / 1000);
+    var hh = Math.floor(totalSec / 3600);
+    var mm = Math.floor((totalSec % 3600) / 60);
+    var ss = totalSec % 60;
+    // 秒まで刻む(2026-07-06: 動くカウントダウンの方が締切の圧が出る)
+    return "残り" + pad2(hh) + ":" + pad2(mm) + ":" + pad2(ss);
   }
 
   function renderEventCard(events) {
@@ -8846,7 +8848,8 @@ window.TW = window.TW || {};
   }
 
   // ---------- イベントカードの残り時間カウントダウン (SPEC_ADDICTION §5.1) ----------
-  // 1分毎更新。画面遷移(=このホーム画面のルート要素がDOMから外れた時)で自動的にinterval解放する。
+  // 毎秒更新(秒針が動くことが締切の圧=ドーパミン)。画面遷移(=このホーム画面の
+  // ルート要素がDOMから外れた時)で自動的にinterval解放する。
 
   var eventCountdownTimer = null;
 
@@ -8874,7 +8877,7 @@ window.TW = window.TW || {};
         var endsAt = itemEl ? Number(itemEl.getAttribute("data-ends-at")) : NaN;
         if (!isNaN(endsAt)) els[i].textContent = fmtCountdown(endsAt);
       }
-    }, 60000);
+    }, 1000);
   }
 
   function bindEvents(container) {
