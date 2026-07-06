@@ -1,6 +1,12 @@
 # 単語ウォーズ (tango-wars)
 
-自分専用の英単語学習ゲーム。将棋ウォーズ式3分ランク対局×ぷにぷに式フィーバー×モンスト式ガチャ収集で、裏でSRS(忘却曲線)が回る。v2で英作文モード(Season 2)を追加予定。
+英単語学習ゲーム(元は自分専用、2026-07-06に一般公開)。将棋ウォーズ式1分ランク対局×ぷにぷに式フィーバーチェイン×モンスト式ガチャ収集で、裏でSRS(忘却曲線)が回る。v2で英作文モード(Season 2)を追加予定。
+
+## 公開
+
+- **公開URL: https://noharag.github.io/tango-wars/** (GitHub Pages / リポジトリ noharaG/tango-wars 公開)
+- 利用者データは各自のブラウザ localStorage のみ(サーバー送信なし=全員独立)
+- **更新手順**: コード修正 → sw.js の SW_VERSION を+1 → `node tools/test_core.js` → `python tools/build.py` → `git add -A && git commit && git push`(push で Pages に自動反映、利用者はリロード2回)
 
 ## 起動・検証
 
