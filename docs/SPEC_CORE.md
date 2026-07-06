@@ -101,6 +101,7 @@ js/main.js         → TW.router, 起動処理
   - **due枠の不足は学習済ランダムに回す(新規へは回さない)** — 新規だらけの対局を防ぐ
   - 学習済プールが尽きた場合のみ未学習語で埋め、それでも足りなければ重複を許して必ず size 個
 - `TW.srs.answer(wordId, correct: boolean, ms: number): { mastery, captured: boolean /*この回答で初捕獲*/, kira: boolean }`
+  - **早期復習ルール(2026-07-06追加)**: 正答でも now < due(期限前の再出題=学習済ランダム枠・同日再演)の場合は**練習扱いとしてSRS状態を一切前進させない**(reps/interval/due/ef/mastery 不変。返り値は現状の mastery、captured/kira は false)。スコア・コイン・XPへの影響は無し(battle側は従来どおり)。誤答は期限前でも従来どおり lapse 処理(忘却はいつでも事実)。初登場語は登録時 due=now なので従来どおり前進する。これにより「短時間の連打正解で間隔21日=キラが机上成立する」穴を塞ぐ
   - quality: 誤答=1 / 正答 ms>6000=3 / 2000<ms<=6000=4 / ms<=2000=5
   - q<3: reps=0, lapses++, interval=0, due=now+10分, mastery=max(0,mastery-1)
   - q>=3: reps++, interval = reps==1?1 : reps==2?3 : Math.round(interval*ef) (日), due=now+interval日,
@@ -128,6 +129,7 @@ js/main.js         → TW.router, 起動処理
   - **cloze(例文穴埋め)**: prompt = ex 中の見出し語を "____" に置換した英文(大文字小文字無視・最初の出現。活用形を考慮し語頭一致でも可)。exJa を和訳ヒントとして UI に併記。choices は ja2en と同じ英単語4択。ex 中に見出し語が見つからない場合は en2ja に振替
   - 誤答択: word.distractorHint(en2ja時) を優先し、不足は同 level±1 の他単語の ja から。重複・正解と同義は除外
   - ja2en: prompt=ja、choices=英単語4つ(同 level±1・同cat優先のスペルが紛らわしい語を優先)
+  - **英単語ひっかけの類義語除外(2026-07-06追加、ja2en/cloze共通)**: 次に該当する語は誤答択に使わない — ①出題語の synonyms に含まれる語 ②その語の synonyms に出題語が含まれる語 ③ja の語義(「、」区切りで分割)が出題語と1つでも重複する語。これを怠ると「奪う」の択に deprive と rob が並ぶ等、正解が複数になる
 - `Session.submit(answer: number|string, ms: number): SubmitResult`
   - SubmitResult = { correct, scoreGained, combo, feverActive, feverJustStarted, feverLevel: 0-4, feverChained: boolean, playerScore, botScore, bonusCoin: number /*10%で基礎5×3、通常0*/, srs: {captured, kira, mastery} }
   - スコア: base100 × comboMult(1+min(combo,20)*0.05) × fever(×(1+feverLevel)) + speedBonus(ms<2000:+50, <4000:+25)

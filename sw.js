@@ -8,7 +8,7 @@
   "use strict";
 
   // キャッシュ名にバージョン文字列を含める。中身を更新したらここを上げる。
-  var SW_VERSION = "v12";
+  var SW_VERSION = "v13";
   var CACHE_PREFIX = "tango-wars-";
   var CACHE_NAME = CACHE_PREFIX + SW_VERSION;
 

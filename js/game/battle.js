@@ -89,18 +89,42 @@ window.TW = window.TW || {};
     return result;
   }
 
-  // ja2en 用の誤答(英単語)を3個作る。level±1・同cat優先、綴りが紛らわしい語を優先。
+  // 出題語と語義が被る(=正解が実質複数になる)語を判定する。SPEC_CORE §4「英単語ひっかけの
+  // 類義語除外(2026-07-06追加)」: ①出題語のsynonymsに含まれる語 ②その語のsynonymsに出題語が
+  // 含まれる語(逆参照) ③jaの語義(「、」区切りで分割・トリム)が出題語と1つでも重複する語。
+  function isMeaningOverlap(word, other) {
+    var wordSynonyms = (word.synonyms || []).map(function (s) { return s.toLowerCase(); });
+    var otherSynonyms = (other.synonyms || []).map(function (s) { return s.toLowerCase(); });
+    var otherWordLower = (other.word || "").toLowerCase();
+    var wordWordLower = (word.word || "").toLowerCase();
+    if (wordSynonyms.indexOf(otherWordLower) !== -1) return true;
+    if (otherSynonyms.indexOf(wordWordLower) !== -1) return true;
+
+    var wordJaSenses = (word.ja || "").split("、").map(function (s) { return s.trim(); }).filter(Boolean);
+    var otherJaSenses = (other.ja || "").split("、").map(function (s) { return s.trim(); }).filter(Boolean);
+    for (var i = 0; i < wordJaSenses.length; i++) {
+      if (otherJaSenses.indexOf(wordJaSenses[i]) !== -1) return true;
+    }
+    return false;
+  }
+
+  // ja2en/cloze 用の誤答(英単語)を3個作る。level±1・同cat優先、綴りが紛らわしい語を優先。
+  // 類義語(synonyms相互参照・ja語義重複)は正解が複数になるため誤答候補から除外する
+  // (SPEC_CORE §4 2026-07-06追加)。除外で母集団が3語未満に痩せる場合、フォールバック
+  // (level±1条件を外して全語から)側にも同じ除外を適用する。
   function buildEnDistractors(word, allWords) {
     var used = {};
     used[word.word.toLowerCase()] = true;
 
+    function baseFilter(w) {
+      return w.id !== word.id && !used[(w.word || "").toLowerCase()] && !isMeaningOverlap(word, w);
+    }
+
     var pool = allWords.filter(function (w) {
-      return w.id !== word.id && !used[(w.word || "").toLowerCase()] && Math.abs(w.level - word.level) <= 1;
+      return baseFilter(w) && Math.abs(w.level - word.level) <= 1;
     });
     if (pool.length < 3) {
-      pool = allWords.filter(function (w) {
-        return w.id !== word.id && !used[(w.word || "").toLowerCase()];
-      });
+      pool = allWords.filter(baseFilter);
     }
     pool.sort(function (a, b) {
       var scoreA = (a.cat === word.cat ? 1000 : 0) + spellSimilarity(a.word, word.word);

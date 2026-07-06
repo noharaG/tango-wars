@@ -159,6 +159,15 @@ window.TW = window.TW || {};
     }
 
     var e = state.srs[wordId];
+
+    // 早期復習ルール(SPEC_CORE §4, 2026-07-06追加): 正答でも期限前(now<due、学習済ランダム枠
+    // での同日再演など)は練習扱いとしてSRS状態を一切前進させない(reps/interval/due/ef/mastery不変)。
+    // 誤答は期限前でも従来どおりlapse処理する(忘却はいつでも事実)。初登場語は直前にdue=nowで
+    // 登録したばかりなので(上のif内)、この分岐には掛からず従来どおり前進する。
+    if (correct && now < e.due) {
+      return { mastery: e.mastery, captured: false, kira: false };
+    }
+
     var prevMastery = e.mastery;
     var prevInterval = e.interval;
 
