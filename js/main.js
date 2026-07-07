@@ -100,20 +100,31 @@ window.TW = window.TW || {};
     appEl = document.getElementById("app");
     navEl = document.getElementById("bottom-nav");
 
-    TW.store.load(); // 日跨ぎ処理(quest/season/streak/newPerDay)は store.load() 内で行われる
+    // 従来の起動処理本体(単語パック読込の後に実行する)。
+    function boot() {
+      TW.store.load(); // 日跨ぎ処理(quest/season/streak/newPerDay)は store.load() 内で行われる
 
-    // 保存済みの音設定を TW.sfx へ反映する。
-    // (js/audio/sfx.js の enabled は既定 true で起動するため、ここで明示的に同期しないと
-    //  「設定で音をOFFにして再読み込みした」場合に反映されない)
-    if (TW.sfx && typeof TW.sfx.setEnabled === "function") {
-      var settings = TW.store.state && TW.store.state.settings;
-      TW.sfx.setEnabled(!settings || settings.sound !== false);
+      // 保存済みの音設定を TW.sfx へ反映する。
+      // (js/audio/sfx.js の enabled は既定 true で起動するため、ここで明示的に同期しないと
+      //  「設定で音をOFFにして再読み込みした」場合に反映されない)
+      if (TW.sfx && typeof TW.sfx.setEnabled === "function") {
+        var settings = TW.store.state && TW.store.state.settings;
+        TW.sfx.setEnabled(!settings || settings.sound !== false);
+      }
+
+      bindNav();
+      bindAudioUnlock();
+
+      go("home");
     }
 
-    bindNav();
-    bindAudioUnlock();
-
-    go("home");
+    // 解禁済み単語パック(章)を読み込んでから起動する(SPEC_PACKS §3)。
+    // TW.packs 未読込(script読込順の崩れ等)でも従来どおり起動できるようガードする。
+    if (TW.packs && typeof TW.packs.loadUnlocked === "function") {
+      TW.packs.loadUnlocked(boot);
+    } else {
+      boot();
+    }
   });
 
   TW.router = {

@@ -38,6 +38,7 @@ window.TW = window.TW || {};
       streak: { days: 0, lastDate: "" },
       srs: {},
       scouted: [],
+      unlockedPacks: ["vol1"], // 単語パック(章)の解禁状態(SPEC_PACKS §3)。既存セーブにも backfill される
       quests: {
         date: today,
         items: TW.quest && TW.quest.getDaily ? TW.quest.getDaily() : []

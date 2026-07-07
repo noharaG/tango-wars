@@ -144,6 +144,7 @@ function loadScript(relPath) {
 
 try {
   loadScript('js/core/util.js');
+  loadScript('js/core/packs.js');
   loadScript('js/core/store.js');
   loadScript('js/core/srs.js');
   loadScript('js/core/rating.js');
@@ -214,6 +215,60 @@ test('store.load: 初期値 (elo/coins/rank/newWordsPerDay)', () => {
   assert(Array.isArray(s.achievements), 'achievements は配列');
   assert(Array.isArray(s.history), 'history は配列');
   assert(s.settings && s.settings.newWordsPerDay === 20, '既定 newWordsPerDay=20');
+});
+
+test('store.load: unlockedPacks が ["vol1"] で存在する (SPEC_PACKS §3)', () => {
+  const s = TW.store.state;
+  assert(Array.isArray(s.unlockedPacks), 'unlockedPacks は配列');
+  assertEqual(s.unlockedPacks, ['vol1'], '新規セーブの初期値は ["vol1"]');
+});
+
+test('store.load: 既存セーブに unlockedPacks が無い場合は ["vol1"] へ backfill される (SPEC_PACKS §3)', () => {
+  // unlockedPacksフィールドを持たない「古い」セーブを直接localStorageへ書き込んでから再ロードし、
+  // mergeDefaultsによる欠損フィールド補完(既存セーブを壊さない方針)を検証する。
+  const savedRaw = localStorage.getItem('tw_save_v1');
+  const legacy = JSON.parse(TW.store.exportSave());
+  delete legacy.unlockedPacks;
+  localStorage.setItem('tw_save_v1', JSON.stringify(legacy));
+
+  TW.store.load();
+  assertEqual(TW.store.state.unlockedPacks, ['vol1'], '欠損フィールドはload時に["vol1"]で補完される');
+
+  localStorage.setItem('tw_save_v1', savedRaw); // 後続テストへの影響を避けて復元(state自体は補完後のままでよい)
+});
+
+test('packs.readUnlockedFromStorage: 壊れたJSON/localStorage不在で ["vol1"] を返す (SPEC_PACKS §3)', () => {
+  const savedRaw = localStorage.getItem('tw_save_v1');
+
+  // 壊れたJSON
+  localStorage.setItem('tw_save_v1', '{ これは不正なJSONです ]]]');
+  assertEqual(TW.packs.readUnlockedFromStorage(), ['vol1'], '壊れたJSONは ["vol1"]');
+
+  // unlockedPacksが無い/配列でない場合も ["vol1"]
+  localStorage.setItem('tw_save_v1', JSON.stringify({ elo: 800 }));
+  assertEqual(TW.packs.readUnlockedFromStorage(), ['vol1'], 'unlockedPacksフィールド自体が無い場合も ["vol1"]');
+  localStorage.setItem('tw_save_v1', JSON.stringify({ unlockedPacks: 'not-an-array' }));
+  assertEqual(TW.packs.readUnlockedFromStorage(), ['vol1'], 'unlockedPacksが配列でない場合も ["vol1"]');
+
+  // 正常な配列はそのまま返す(store.load前でも呼べる純関数であることの確認)
+  localStorage.setItem('tw_save_v1', JSON.stringify({ unlockedPacks: ['vol1', 'vol2'] }));
+  assertEqual(TW.packs.readUnlockedFromStorage(), ['vol1', 'vol2'], '正常な配列はそのまま返す');
+
+  // localStorage不在(node環境相当)でも例外を投げず ["vol1"]
+  const savedLocalStorage = global.localStorage;
+  global.localStorage = undefined;
+  let threw = false;
+  let result;
+  try {
+    result = TW.packs.readUnlockedFromStorage();
+  } catch (e) {
+    threw = true;
+  }
+  global.localStorage = savedLocalStorage;
+  assert(!threw, 'localStorage不在でも例外を投げない');
+  assertEqual(result, ['vol1'], 'localStorage不在時は ["vol1"]');
+
+  localStorage.setItem('tw_save_v1', savedRaw); // 後続テストへの影響を避けて復元
 });
 
 test('store.wordById / allWords', () => {

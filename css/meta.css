@@ -528,6 +528,57 @@
   font-size: 14px;
 }
 
+/* ---------- 設定: 単語パック(章) (SPEC_PACKS §4) ---------- */
+
+.meta-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meta-pack-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card2, #1c2840);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meta-pack-item--unlocked {
+  opacity: 0.85;
+}
+
+.meta-pack-item--locked {
+  opacity: 0.55;
+}
+
+.meta-pack-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.meta-pack-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.meta-pack-cum {
+  font-size: 11px;
+  color: var(--text-dim, #8a97ac);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta-pack-unlock-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
 .meta-data-block {
   margin-bottom: 16px;
 }

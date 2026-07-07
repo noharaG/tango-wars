@@ -1,0 +1,3 @@
+# パック生成の中間物(リポジトリに入れない — 再現手順は docs/SPEC_PACKS.md §6)
+data/packs/raw/
+data/packs/tmp/

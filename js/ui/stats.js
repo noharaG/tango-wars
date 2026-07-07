@@ -280,6 +280,82 @@ window.TW.ui = window.TW.ui || {};
     return '<div class="card meta-settings-section"><div class="meta-settings-section-title">' + title + "</div>" + innerHtml + "</div>";
   }
 
+  // ---- 単語パック(章) (SPEC_PACKS §4) --------------------------------
+
+  function packUnlockedSet() {
+    var unlocked = (TW.store.state.unlockedPacks || ["vol1"]);
+    var set = {};
+    unlocked.forEach(function (id) { set[id] = true; });
+    return set;
+  }
+
+  // 「解禁済み語彙」= 現在 TW.WORD_DATA に読み込まれている全語(既に解禁済みのパックのみが
+  // 読み込まれている前提。SPEC_PACKS §3 の loadUnlocked が起動時に反映済み)。
+  // mastery>=3 を捕獲とする既存の定義(SPEC_CORE §2)に合わせて捕獲率を出す。
+  function unlockedCaptureStats() {
+    var all = TW.store.allWords();
+    var total = all.length;
+    var srsMap = TW.store.state.srs || {};
+    var captured = 0;
+    all.forEach(function (w) {
+      var rec = srsMap[w.id];
+      if (rec && rec.mastery >= 3) captured++;
+    });
+    return { total: total, captured: captured, rate: total > 0 ? captured / total : 1 };
+  }
+
+  function packsInnerHtml() {
+    var index = (typeof TW.PACK_INDEX !== "undefined" && Array.isArray(TW.PACK_INDEX)) ? TW.PACK_INDEX : [];
+    var unlockedSet = packUnlockedSet();
+
+    var itemsHtml = index.map(function (p) {
+      var cumLabel = "累計 " + fmt(p.cum) + "語";
+      if (unlockedSet[p.id]) {
+        return '<div class="meta-pack-item meta-pack-item--unlocked">' +
+          '<div class="meta-pack-info">' +
+          '<div class="meta-pack-name">✓ ' + escapeHtml(p.name) + "</div>" +
+          '<div class="meta-pack-cum">' + cumLabel + "</div>" +
+          "</div></div>";
+      }
+      if (p.available) {
+        return '<div class="meta-pack-item meta-pack-item--available">' +
+          '<div class="meta-pack-info">' +
+          '<div class="meta-pack-name">' + escapeHtml(p.name) + "</div>" +
+          '<div class="meta-pack-cum">' + cumLabel + "(+" + fmt(p.count) + "語)</div>" +
+          "</div>" +
+          '<button type="button" class="btn btn-primary meta-pack-unlock-btn" data-pack-id="' + escapeHtml(p.id) + '">解禁する</button>' +
+          "</div>";
+      }
+      return '<div class="meta-pack-item meta-pack-item--locked">' +
+        '<div class="meta-pack-info">' +
+        '<div class="meta-pack-name">🔒 ' + escapeHtml(p.name) + "</div>" +
+        '<div class="meta-pack-cum">' + cumLabel + "・近日追加</div>" +
+        "</div></div>";
+    }).join("");
+
+    return '<div class="meta-pack-list">' + (itemsHtml || '<div class="meta-empty">パック情報を読み込めませんでした</div>') + "</div>";
+  }
+
+  function bindPacksSection(container) {
+    var btns = container.querySelectorAll(".meta-pack-unlock-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function (ev) {
+        var packId = ev.currentTarget.getAttribute("data-pack-id");
+        var stats = unlockedCaptureStats();
+        if (stats.rate < 0.7) {
+          var uncaptured = stats.total - stats.captured;
+          var warn = "まだ" + fmt(uncaptured) + "語が未捕獲です。それでも解禁しますか?";
+          if (!window.confirm(warn)) return;
+        }
+        var s = TW.store.state;
+        s.unlockedPacks = s.unlockedPacks || ["vol1"];
+        if (s.unlockedPacks.indexOf(packId) === -1) s.unlockedPacks.push(packId);
+        TW.store.save();
+        window.location.reload();
+      });
+    }
+  }
+
   function toggleRowHtml(id, label, checked) {
     return '<label class="meta-toggle-row" for="' + id + '">' +
       '<span class="meta-toggle-label">' + label + "</span>" +
@@ -354,8 +430,11 @@ window.TW.ui = window.TW.ui || {};
 
     container.innerHTML = "" +
       sectionWrap("プレイ設定", togglesHtml) +
+      sectionWrap("単語パック", packsInnerHtml()) +
       sectionWrap("データ", dataSectionInnerHtml()) +
       sectionWrap("実績", achievementsInnerHtml());
+
+    bindPacksSection(container);
 
     container.querySelector("#tw-set-sound").addEventListener("change", function (ev) {
       s.sound = !!ev.target.checked;
